@@ -36,11 +36,11 @@ INCFILES=$(TBLFILES:.tbl=.inc)
 
 HFILES_INT=$(sort $(wildcard src/*.h)) $(HFILES)
 
-VERSION_CURRENT=0
-VERSION_REVISION=3
-VERSION_AGE=0
+VERSION_MAJOR=0
+VERSION_MINOR=1
+VERSION_PATCH=3
 
-VERSION=0.1.3
+VERSION=$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_PATCH)
 
 PREFIX=/usr/local
 BINDIR=$(PREFIX)/bin
@@ -49,11 +49,15 @@ INCDIR=$(PREFIX)/include
 MANDIR=$(PREFIX)/share/man
 MAN3DIR=$(MANDIR)/man3
 
-all: $(LIBRARY) $(BINFILES)
+.PHONY: help
+help: ## Display this help text.
+	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n\nAvailable targets:\n"} /^[\/0-9a-zA-Z_-]+:.*?##/ { printf "  \x1b[32;01m%-20s\x1b[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 
-$(LIBRARY): $(OBJECTS)
+all: $(LIBRARY) $(BINFILES) ## Compile libraries and binaries
+
+$(LIBRARY): $(OBJECTS) ## Compile libraries
 	@echo LINK $@
-	@$(LIBTOOL) --mode=link --tag=CC $(CC) -rpath $(LIBDIR) -version-info $(VERSION_CURRENT):$(VERSION_REVISION):$(VERSION_AGE) -o $@ $^ $(LDFLAGS)
+	@$(LIBTOOL) --mode=link --tag=CC $(CC) -rpath $(LIBDIR) -version-info 0:0:0 -o $@ $^ $(LDFLAGS)
 
 src/%.lo: src/%.c $(HFILES_INT)
 	@echo CC $<
@@ -81,17 +85,17 @@ t/harness: t/harness.lo $(LIBRARY)
 	@$(LIBTOOL) --mode=link --tag=CC $(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 .PHONY: test
-test: $(LIBRARY) t/harness
+test: $(LIBRARY) t/harness ## Run tests
 	for T in `ls t/[0-9]*.test`; do echo "** $$T **"; perl t/run-test.pl $$T $(if $(VALGRIND),--valgrind) || exit 1; done
 
 .PHONY: clean
-clean:
+clean: ## Clean up output files
 	$(LIBTOOL) --mode=clean rm -f $(OBJECTS) $(INCFILES)
 	$(LIBTOOL) --mode=clean rm -f t/harness.lo t/harness
 	$(LIBTOOL) --mode=clean rm -f $(LIBRARY) $(BINFILES)
 
 .PHONY: install
-install: install-inc install-lib install-bin
+install: install-inc install-lib install-bin ## Install libvterm
 
 install-inc:
 	install -d $(DESTDIR)$(INCDIR)
