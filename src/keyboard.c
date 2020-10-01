@@ -130,7 +130,7 @@ void vterm_keyboard_key(VTerm *vt, VTermKey key, VTermModifier mod)
   if(key == VTERM_KEY_NONE)
     return;
 
-  keycodes_s k;
+  keycodes_s k = { 0 };
   if(key < VTERM_KEY_FUNCTION_0) {
     if(key >= sizeof(keycodes)/sizeof(keycodes[0]))
       return;
